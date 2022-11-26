@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 const { verifyToken } = require('../utils/Verify')
 
+
 // REGISTER A USER
 router.post('/register', async (req, res, next) => {
     const salt = bcrypt.genSaltSync(10);
@@ -35,10 +36,9 @@ router.post('/login', async (req, res, next) => {
         const validatePassword = await bcrypt.compareSync(req.body.password, user.password);
         !validatePassword && res.status(400).json('password not matched')
 
-        const { password, isAdmin, ...others } = user._doc
+        const { password, isAdmin, email, ...others } = user._doc
 
-        const token = jwt.sign({ id: user.id, isAdmin: user.isAdmin }, process.env.JWT_SECRET, { expiresIn: "1h" })
-
+        const token = jwt.sign({ id: user.id, isAdmin: user.isAdmin, username: user.username}, process.env.JWT_SECRET, { expiresIn: "1h" })
         res.status(200).json({ ...others, token })
         console.log(user._doc)
     } catch (err) {
@@ -65,7 +65,7 @@ router.put('/update/:id', async (req, res, next) => {
     } else {
         res.status(401).json("You can update only your account!");
     }
-   
+
 })
 // GET ALL USER 
 router.get('/get', async (req, res, next) => {
@@ -91,8 +91,8 @@ router.get('/get/:id', async (req, res, next) => {
 })
 //DELETE USER
 router.delete('/delete/:id', async (req, res, next) => {
-
     try {
+
         const user = await User.findByIdAndDelete(req.params.id)
         res.status(200).json(user)
         console.log(user)
@@ -102,7 +102,4 @@ router.delete('/delete/:id', async (req, res, next) => {
     }
 })
 
-router.get("/verifyToken", verifyToken, (req, res) => {
-    res.send('token is valid')
-})
 module.exports = router;
